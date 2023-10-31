@@ -1,0 +1,8 @@
+{
+  "name": "Rizzo - Hotkey Manager",
+  "description": "Manages your Hotkeys on a per window basis using piper.",
+  "uuid": "rizzo@dubious.site",
+  "shell-version": [
+    "45"
+  ]
+}
