@@ -15,9 +15,10 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
+
+import Gio from 'gi://Gio'
 import Shell from 'gi://Shell'
 import GObject from 'gi://GObject';
-import Gio from 'gi://Gio'
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -30,11 +31,6 @@ const FuckYouGnome = GObject.registerClass(
         constructor() {
             super();
             this._restacked = global.display.connect('notify::focus-window', () => {this.onFocusWindowSignal();});
-            //this._restacked = global.display.connect('notify::focus-window', () => {
-            //    this.onFocusWindowSignal().resolve().catch();
-            //})
-
-
         }
 
         destroy() {
@@ -42,34 +38,41 @@ const FuckYouGnome = GObject.registerClass(
         }
 
         async onFocusWindowSignal() {
-            //let fw = global.display.focus_window.get_pid();
+            /*get all windows /**/
+            /*stores the pids in array /**/
+            let pid_arr = global.display.list_all_windows().map((window) => {
+                return window.get_pid();
+            });
 
-            
-            let pid_arr = global.display.list_all_windows().map((window) => window.get_pid());
-            console.log(pid_arr +"\n\n");
-            var procname_arr = await Promise.all(pid_arr.map(
-                async (pid) => {
-                    let procname = await this.pid_to_procname(pid).then((value) => {console.log(value + "kam wieder\n"); return value;});
-                    console.log(procname + "kam wieder again\n");
-                    return procname;
-                })
-            );
-            // "ps -p {fw.get_pid()} -o comm="
-            console.log(procname_arr + " jetzt\n");
+            /*get the process names for each pid/**/
+            /*stores the names in array (sorted)/**/
+            var procname_arr = pid_arr.map((pid) => {
+                return this.pid_to_procname(pid);
+            }).sort();
+
+            console.log(procname_arr + "\n");
         }
-        async pid_to_procname(pid){
+
+        pid_to_procname(pid){
             try {
 
                 let flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE | Gio.SubprocessFlags.STDIN_PIPE;
-                /*execute command in new process/**/
+                /*execute command in new process /**/
                 let sp = Gio.Subprocess.new(["ps", "-p", pid + "", "-o",  "comm="], flags);
                 sp.wait(Gio.Cancellable.new());
                 
                 /*get outputpipe of process /**/
                 let sop = sp.get_stdout_pipe();
 
+                /*get output of process and convert into String /**/
                 let x = sop.read_bytes(128, null).unref_to_array();
                 let text = new TextDecoder().decode(x);
+
+                /*remove linebreak of output /**/
+                if (text){
+                    /* text was not (empty string, false, 0, null, undefined, ...) /**/
+                    text = text.slice(0,-1);
+                }
 
                 sp.force_exit();
                 return text; 
