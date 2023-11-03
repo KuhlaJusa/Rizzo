@@ -29,10 +29,10 @@ const FuckYouGnome = GObject.registerClass(
     class FuckYouGnome extends GObject.Object {
         constructor() {
             super();
-            //this._restacked = global.display.connect('notify::focus-window', () => {this.onFocusWindowSignal();});
-            this._restacked = global.display.connect('notify::focus-window', () => {
-                this.onFocusWindowSignal().resolve().catch();
-            })
+            this._restacked = global.display.connect('notify::focus-window', () => {this.onFocusWindowSignal();});
+            //this._restacked = global.display.connect('notify::focus-window', () => {
+            //    this.onFocusWindowSignal().resolve().catch();
+            //})
 
 
         }
@@ -47,37 +47,33 @@ const FuckYouGnome = GObject.registerClass(
             
             let pid_arr = global.display.list_all_windows().map((window) => window.get_pid());
             console.log(pid_arr +"\n\n");
-            let procname_arr = await pid_arr.map(async (pid) => {
-                await this.pid_to_procname(pid);
-            })
+            var procname_arr = await Promise.all(pid_arr.map(
+                async (pid) => {
+                    let procname = await this.pid_to_procname(pid).then((value) => {console.log(value + "kam wieder\n"); return value;});
+                    console.log(procname + "kam wieder again\n");
+                    return procname;
+                })
+            );
             // "ps -p {fw.get_pid()} -o comm="
             console.log(procname_arr + " jetzt\n");
         }
-        async pid_to_procname(pid2){
-            
+        async pid_to_procname(pid){
             try {
-                let nimmdenscheiss = Gio.Cancellable.new();
+
                 let flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE | Gio.SubprocessFlags.STDIN_PIPE;
-                console.log("hier1\n\n");
-                let sp = Gio.Subprocess.new(["ps", "-p", pid2 + "", "-o",  "comm="], flags);
-                console.log("hier2\n\n");
-                //sp.init(nimmdenscheiss);
-                console.log("hier3\n\n");
-                //sp.wait(nimmdenscheiss)
-                await sp.wait_async(nimmdenscheiss, () => {});
-                //console.log(sp.get_exit_status());
-                console.log("hier4\n\n");
+                /*execute command in new process/**/
+                let sp = Gio.Subprocess.new(["ps", "-p", pid + "", "-o",  "comm="], flags);
+                sp.wait(Gio.Cancellable.new());
+                
+                /*get outputpipe of process /**/
                 let sop = sp.get_stdout_pipe();
-                console.log("hier5\n\n");
+
                 let x = sop.read_bytes(128, null).unref_to_array();
-                console.log("hier6\n\n");
-                if (x == null){
-                    console.log("buamahus\n\n");
-                }
                 let text = new TextDecoder().decode(x);
-                console.log(text + "\n");
+
                 sp.force_exit();
                 return text; 
+
             } catch(error){
                 console.log(error + "\n\n\n");
             }
