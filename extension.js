@@ -42,9 +42,10 @@ Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async');
 
 const FuckYouGnome = GObject.registerClass(
     class FuckYouGnome extends GObject.Object {
-        constructor(config) {
+        constructor() {
             super();
             this._restacked = global.display.connect('notify::focus-window', this.onFocusWindowSignal.bind(this));
+            this.config = this.storeConfig();
         }
 
         destroy() {
@@ -91,21 +92,6 @@ const FuckYouGnome = GObject.registerClass(
                 console.log(error + "\n\n\n");
             }
         }
-    }
-);
-
-
-export default class QuickSettingsExampleExtension extends Extension {
-    async enable() {
-        console.log("Hello world!\n\n\n\n");
-        let config = await this.loadConfig();
-        this.logic = new FuckYouGnome(config);
-    }
-
-    disable() {
-        this.logic.destroy();
-    }
-
     async loadConfig() {
         let environment = GLib.get_environ();
         let home_dir = GLib.get_home_dir();
@@ -156,4 +142,18 @@ export default class QuickSettingsExampleExtension extends Extension {
         let bytes = GLib.Bytes(JSON.stringify(config_object));
         await cfp.replace_contents_bytes_async(bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
     }
+    }
+);
+
+
+export default class QuickSettingsExampleExtension extends Extension {
+    async enable() {
+        console.log("Hello world!\n\n\n\n");
+        this.logic = new FuckYouGnome();
+    }
+
+    disable() {
+        this.logic.destroy();
+    }
+
 }
