@@ -55,11 +55,11 @@ const FuckYouGnome = GObject.registerClass(
                 return window.get_pid();
             });
 
-            /*get the process names for each pid/**/
+            /*get the process names for each pid (async)/**/
             /*stores the names in array (sorted)/**/
-            let procname_arr = pid_arr.map((pid) => this.pid_to_procname(pid));
-
-            procname_arr = await Promise.all(procname_arr);
+            let procname_arr = (await Promise.all(
+                pid_arr.map((pid) => this.pid_to_procname(pid))
+            )).sort();
 
             console.log(procname_arr + "\n");
 
@@ -72,18 +72,6 @@ const FuckYouGnome = GObject.registerClass(
                 let flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE | Gio.SubprocessFlags.STDIN_PIPE;
                 /*execute command in new process /**/
                 let sp = Gio.Subprocess.new(["ps", "-p", pid + "", "-o",  "comm="], flags);
-
-
-                // sp.wait(Gio.Cancellable.new());
-
-                // /*get outputpipe of process /**/
-                // let sop = sp.get_stdout_pipe();
-
-                // /*get output of process and convert into String /**/
-                // //let x = sop.read_bytes(128, null).unref_to_array();
-                // let x = await sop.read_bytes_async(128, GLib.PRIORITY_HIGH_IDLE, null);
-                // let text = new TextDecoder().decode(x.unref_to_array());
-
                 /*connect to subprocess, wait for finish and read stdout (async) /**/
                 let[text, stderr_] = await sp.communicate_utf8_async(null, null);
 
