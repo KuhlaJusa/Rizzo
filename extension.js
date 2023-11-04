@@ -51,22 +51,22 @@ const FuckYouGnome = GObject.registerClass(
         async onFocusWindowSignal() {
             /*get all windows /**/
             /*stores the pids in array /**/
-            let pid_arr = global.display.list_all_windows().map((window) => {
+            let pidArr = global.display.list_all_windows().map((window) => {
                 return window.get_pid();
             });
 
             /*get the process names for each pid (async)/**/
             /*stores the names in array (sorted)/**/
-            let procname_arr = (await Promise.all(
-                pid_arr.map((pid) => this.pid_to_procname(pid))
+            let procnameArr = (await Promise.all(
+                pidArr.map((pid) => this.pidToProcname(pid))
             )).sort();
 
-            console.log(procname_arr + "\n");
+            console.log(procnameArr + "\n");
 
             return;
         }
 
-        async pid_to_procname(pid){
+        async pidToProcname(pid){
             try {
 
                 let flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE | Gio.SubprocessFlags.STDIN_PIPE;
