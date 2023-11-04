@@ -28,6 +28,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { QuickToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
+import { RatbagInterface } from './ratbagInterface.js';
+
 Gio._promisify(Gio.InputStream.prototype, 'read_bytes_async', 'read_bytes_finish');
 /* Gio.Subprocess */
 Gio._promisify(Gio.Subprocess.prototype, 'communicate_async');
@@ -37,15 +39,19 @@ Gio._promisify(Gio.Subprocess.prototype, 'wait_check_async');
 // async file operations
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.File.prototype, 'create_async');
-Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async');
+Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
 
 
 const FuckYouGnome = GObject.registerClass(
     class FuckYouGnome extends GObject.Object {
         constructor() {
             super();
+        }
+        async init() {
             this._restacked = global.display.connect('notify::focus-window', this.onFocusWindowSignal.bind(this));
-            this.config = this.storeConfig();
+            this.config = await this.loadConfig();
+            this.ratbag_interface = await new RatbagInterface().init();
+
         }
 
         destroy() {
@@ -150,6 +156,7 @@ export default class QuickSettingsExampleExtension extends Extension {
     async enable() {
         console.log("Hello world!\n\n\n\n");
         this.logic = new FuckYouGnome();
+        await this.logic.init();
     }
 
     disable() {
