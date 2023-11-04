@@ -92,56 +92,56 @@ const FuckYouGnome = GObject.registerClass(
                 console.log(error + "\n\n\n");
             }
         }
-    async loadConfig() {
-        let environment = GLib.get_environ();
-        let home_dir = GLib.get_home_dir();
-        let config_home = GLib.environ_getenv(environment, "$XDG_CONFIG_HOME") ?? ".config";
-        let conf_dir = home_dir + "/" + config_home + "/rizzo/";
-        let conf_path = conf_dir + "bindings.json";
+        async loadConfig() {
+            let environment = GLib.get_environ();
+            let home_dir = GLib.get_home_dir();
+            let config_home = GLib.environ_getenv(environment, "$XDG_CONFIG_HOME") ?? ".config";
+            let conf_dir = home_dir + "/" + config_home + "/rizzo/";
+            let conf_path = conf_dir + "bindings.json";
 
-        // Check if directory exists
-        let dir_fp = Gio.File.new_for_path(conf_dir);
-        if (!dir_fp.query_exists(null)) {
-            dir_fp.make_directory(null);
+            // Check if directory exists
+            let dir_fp = Gio.File.new_for_path(conf_dir);
+            if (!dir_fp.query_exists(null)) {
+                dir_fp.make_directory(null);
+            }
+
+            // check if config file exists
+            let cfp = Gio.File.new_for_path(conf_path);
+            if (!cfp.query_exists(null)) {
+                await cfp.create_async(0, GLib.PRIORITY_DEFAULT, null);
+            }
+            try {
+                let [contents, _] = await cfp.load_contents_async(null) ?? "";
+                let config_text = new TextDecoder("utf-8").decode(contents);
+                let conf_obj = JSON.parse(config_text);
+                console.log(conf_obj);
+                return conf_obj;
+            } catch (error) {
+                console.log("Failed to read file " + conf_path + "   " + error)
+            }
         }
 
-        // check if config file exists
-        let cfp = Gio.File.new_for_path(conf_path);
-        if (!cfp.query_exists(null)) {
-            await cfp.create_async(0, GLib.PRIORITY_DEFAULT, null);
-        }
-        try {
-            let [contents, _] = await cfp.load_contents_async(null) ?? "";
-            let config_text = new TextDecoder("utf-8").decode(contents);
-            let conf_obj = JSON.parse(config_text);
-            console.log(conf_obj);
-            return conf_obj;
-        } catch (error) {
-            console.log("Failed to read file " + conf_path + "   " + error)
-        }
-    }
+        async storeConfig(config_object) {
+            let environment = GLib.get_environ();
+            let home_dir = GLib.get_home_dir();
+            let config_home = GLib.environ_getenv(environment, "$XDG_CONFIG_HOME") ?? ".config";
+            let conf_dir = home_dir + "/" + config_home + "/rizzo/";
+            let conf_path = conf_dir + "bindings.json";
 
-    async storeConfig(config_object) {
-        let environment = GLib.get_environ();
-        let home_dir = GLib.get_home_dir();
-        let config_home = GLib.environ_getenv(environment, "$XDG_CONFIG_HOME") ?? ".config";
-        let conf_dir = home_dir + "/" + config_home + "/rizzo/";
-        let conf_path = conf_dir + "bindings.json";
+            // Check if directory exists
+            let dir_fp = Gio.File.new_for_path(conf_dir);
+            if (!dir_fp.query_exists(null)) {
+                dir_fp.make_directory(null);
+            }
 
-        // Check if directory exists
-        let dir_fp = Gio.File.new_for_path(conf_dir);
-        if (!dir_fp.query_exists(null)) {
-            dir_fp.make_directory(null);
+            // check if config file exists
+            let cfp = Gio.File.new_for_path(conf_path);
+            if (!cfp.query_exists(null)) {
+                await cfp.create_async(0, GLib.PRIORITY_DEFAULT, null);
+            }
+            let bytes = GLib.Bytes(JSON.stringify(config_object));
+            await cfp.replace_contents_bytes_async(bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
         }
-
-        // check if config file exists
-        let cfp = Gio.File.new_for_path(conf_path);
-        if (!cfp.query_exists(null)) {
-            await cfp.create_async(0, GLib.PRIORITY_DEFAULT, null);
-        }
-        let bytes = GLib.Bytes(JSON.stringify(config_object));
-        await cfp.replace_contents_bytes_async(bytes, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-    }
     }
 );
 
